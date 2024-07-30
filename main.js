@@ -45,12 +45,12 @@ function createPassengerFigures(){
 	let indices = createBordingOrder_groupsBackToFront(seatMap, 8, false);
 
 	// all or only some of the seats might be full
-	var manualMaxNumPassengers = 2000;
-	var totalNoSeats = seatMap.seatDescs.length;
-	let numDrawnPassengers = Math.min(totalNoSeats, manualMaxNumPassengers)
+	let manualMaxNumPassengers = 2000;
+	let totalNoSeats = seatMap.seatDescs.length;
+	numDrawnPassengers = Math.min(totalNoSeats, manualMaxNumPassengers)
 
 	// create array with "passengers"
-	var figures = Array()
+	let figures = Array()
 	for(let i = 0; i < numDrawnPassengers; i++){
 		figures.push(new Figure(seatMap, indices[i], figureRadius))
 	}
@@ -68,35 +68,6 @@ function loadSeatmapLayouts(){
 		nameToSeatmapDict[map.name] = map;
 	} 
 }
-
-function createSeatmapDict(){
-	let res = {};
-	for(let map of seatMapLayouts){
-		
-	}
-}
-
-
-//get canvas, set size
-const planeCanvas = document.getElementById("canvas");
-planeCanvas.height = 300;
-planeCanvas.width = 1100;
-const planeCtx = planeCanvas.getContext("2d");
-
-const seatmapSelector = document.getElementById("seatmapSelector");
-const seatmapLink = document.getElementById("seatmapLink");
-const nameToSeatmapDict = {};
-
-let seatMap = null;
-let figureRadius = -1; // based on seatmap, needed in figures
-loadSeatmapLayouts()
-onSeatmapChanged(seatMapLayouts[0]); // draw first map 
-
-
-
-let passengerFigures = []
-var runAnimation = false;
-
 
 function onStart(){
 	runAnimation = true;
@@ -127,13 +98,51 @@ function onSeatmapChanged(seatMapDesc=null){
 	seatMap = new Seatmap(seatMapDesc.map, planeCanvas.width, planeCanvas.height); 
 	seatMap.draw(planeCtx)
 	figureRadius = Math.min(seatMap.seatW, seatMap.seatH)/2-2;
-	
+
 	console.log("####################");
 
 	//set link to description
 	seatmapLink.setAttribute("href", seatMapDesc.url);
 	seatmapLink.innerHTML = seatMapDesc.url;
+	
+	passengerFigures = createPassengerFigures();
 }
+
+
+//get canvas, set size
+const planeCanvas = document.getElementById("canvas");
+planeCanvas.height = 300;
+planeCanvas.width = 1100;
+const planeCtx = planeCanvas.getContext("2d");
+
+const seatmapSelector = document.getElementById("seatmapSelector");
+const seatmapLink = document.getElementById("seatmapLink");
+const nameToSeatmapDict = {};
+
+let seatMap = null;
+let figureRadius = -1; // based on seatmap, needed in figures
+let passengerFigures = [];
+let numDrawnPassengers; //TODO what?? - used for drawing
+loadSeatmapLayouts();
+onSeatmapChanged(seatMapLayouts[0]); // draw first map 
+
+
+
+var runAnimation = false;
+
+
+/*
+var indices = createBordingOrder_groupsBackToFront(seatMap, 8, false);
+var cnt = 2000; // manual maximum num seats
+
+var totalNoSeats = seatMap.seatDescs.length;
+cnt = Math.min(cnt, totalNoSeats)
+var manyFigures = Array()
+for(let i = 0; i < cnt; i++){
+	passengerFigures.push(new Figure(seatMap, indices[i], figureRadius))
+}
+*/
+
 
 function save(){}
 function discard(){}
@@ -160,8 +169,8 @@ function animate(timeStamp){
 	//console.log("time:", timeStamp, elapsedSinceLastFrame, elapsed)
 	
 	seatMap.draw(planeCtx) //TODO maybe reduce cost for redraw - remember values where possible
-	figure.update(timeStamp)
-	figure.draw(planeCtx)
+	//figure.update(timeStamp)
+	//figure.draw(planeCtx)
 
 
 

@@ -190,6 +190,11 @@ class Seatmap{
 
 
 		this.mapSeatCodeToIndex = {};
+
+		// create buffer canvas - draw individual elements once, then copy from buffer
+		// init in first draw
+		this.bufferCanvas = null;
+        this.bufCtx = null;
 		
 		
 		//TODO delete if unused
@@ -430,6 +435,29 @@ class Seatmap{
 		}
 	}
 
+	drawInitial(){
+		// fill background 
+		this.bufCtx.fillStyle = "#444444";
+		this.bufCtx.fillRect(0, 0, this.right, this.bottom)
+		
+		// airplane "frame"
+		this.drawPlaneOuterFrame(this.bufCtx);
+		
+		// draw row numbers on top
+		this.drawRowNumbers(this.bufCtx);
+
+		//draw seats
+		for(let seatIdx = 0; seatIdx < this.seatDescs.length; seatIdx++){
+			this.seatDescs[seatIdx].draw(this.bufCtx);
+		}
+		
+		// draw aisles
+		this.drawAisles(this.bufCtx);
+		
+		// draw exits
+		this.drawExits(this.bufCtx);
+	}
+
 	draw(ctx){
 		//if error show red screen and message
 		if(this.error != ""){
@@ -444,31 +472,24 @@ class Seatmap{
 			return false;
 		}
 
-		if(!this.initialized){
-			// need canvas ctx for some size caluclations
-			this.initialized = true;
-			this.initializeSeatsDescs(ctx)
-		}
-		
-		// fill background 
-		ctx.fillStyle = "#444444";
-		ctx.fillRect(0, 0, this.right, this.bottom)
-		
-		// airplane "frame"
-		this.drawPlaneOuterFrame(ctx);
-		
-		// draw row numbers on top
-		this.drawRowNumbers(ctx);
+		if(this.initialized){
+			// drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight) // with s=start, d=destination
+			ctx.drawImage(this.bufferCanvas, 0, 0, this.width, this.height);
+		} else {
+			// create buffer canvas
+			this.bufferCanvas = document.createElement('canvas');
+			this.bufferCanvas.width = this.width;
+			this.bufferCanvas.height = this.height;
+			this.bufCtx = this.bufferCanvas.getContext('2d');
 
-		//draw seats
-		for(let seatIdx = 0; seatIdx < this.seatDescs.length; seatIdx++){
-			this.seatDescs[seatIdx].draw(ctx);
+			// initialize seats 
+			this.initializeSeatsDescs(ctx)
+
+			// draw on bufferCanvas
+			this.drawInitial();
+
+			this.initialized = true;
+			this.draw(ctx); // call again, with initialized=true
 		}
-		
-		// draw aisles
-		this.drawAisles(ctx);
-		
-		// draw exits
-		this.drawExits(ctx);
 	}
 }

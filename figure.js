@@ -62,46 +62,7 @@ class Figure{
 		this.testTurnDeg = 10;
 		this.testGoalAngle = 0;
 
-		//console.log("kflsajlfkd")
-		//console.log(this.seatDesc)
-
-		this.createPath(1)
-		return
-
-		
-		
-		
-		
-		this.acceleration = 0.2;
-		this.maxSpeed = 1;
-		this.friction = 0.02;
-		this.angle = 0;
-		this.damaged = false;
-		this.color = "lime";
-
-		this.goalX = goalX;
-		this.goalY = goalY;
-		this.fixGoal();
-		
-		this.lastTime = 0;
-		
-		//this.begin_bounce()
-		
-		
-		
-		/*
-		this.path.push({x:50, y:50})
-		this.path.push({x:1050, y:50})
-		this.path.push({x:1050, y:250})
-		this.path.push({x:50, y:250})
-		*/
-		this.path.push({x:140, y:240})
-		this.path.push({x:140, y:95})
-		this.path.push({x:460, y:95})
-		this.path.push({x:460, y:112})
-		this.pIdx = 0;
-		this.goal = null;
-		this.getNextGoal();
+		this.createPath(0)
 	}
 
 	onResize(){
@@ -198,35 +159,11 @@ class Figure{
 		return this.x == this.goal.x && this.y == this.goal.y;
 	}
 	
-	
-	updateB(){
-		let action = this.currentAction;
-
-		if(action != null){
-			// if current finished - start next
-		} 
-
-		if(action == null){
-			return;
-		}
-
-		if(action.type == ActionType.Wait){
-
-		}
-
-		if(action.type == ActionType.Turn){
-			let clockwiseDist = Math.abs(action.goalAngle - this.viewAngle)
-			let counterClockwiseDist = Math.abs(action.goalAngle - this.viewAngle)
-
-			let turnClockwise = 999
-		}
-	}
-
 	update(time, allFigures){
 		if(this.goal == null) return;
 
 		//wait, turn or move
-		// before move check collisions with other figures first
+		// before move check collisions with other figures
 
 		if(this.viewAngle != this.testGoalAngle){
 			let diffDeg = findDifferenceBetweenAngles(this.viewAngle, this.testGoalAngle, this.testTurnDeg);
@@ -239,30 +176,29 @@ class Figure{
 			this.sleepTicks--;
 			return;
 		}
-		// start next goal if needed
-		if( this.goal != null ){ // if not finished
-			//console.log("upper", this.goal, this.x, this.y)
-			if( this.isAtGoalXY() ){
-				//console.log("dasssssssssssssssssssssssss", this.goal)
-				this.getNextGoal();
-				if(this.goal == null){
-					this.viewAngle = 270;
-					this.finished = true;
-					return;
-				}
-				
-				this.goalX = this.goal.x;
-				this.goalY = this.goal.y;
 
-				this.testGoalAngle = angle(this.x, this.y, this.goalX, this.goalY);
-				return; // TODO - dont move in first step
-			}
-		} else {
-			return
+		// start next goal if needed
+		if(this.goal == null){
+			return;
 		}
-		
+
+		if( this.isAtGoalXY() ){
+			this.getNextGoal();
+			if(this.goal == null){
+				this.viewAngle = 270;
+				this.finished = true;
+				return;
+			}
+			
+			this.goalX = this.goal.x;
+			this.goalY = this.goal.y;
+
+			this.testGoalAngle = angle(this.x, this.y, this.goalX, this.goalY);
+			return; // TODO - dont move in first step
+		}
+
 		//check surroundings etc
-		if(!this.checkCollisions || !this.sensor.updateTest_findCollisions(allFigures)){
+		if(!this.checkCollisions || !this.sensor.checkCollision(allFigures)){
 			this.#move()
 			this.isBlocked = false;
 		} else {
@@ -304,16 +240,16 @@ class Figure{
 		ctx.fill();
 	}
 
-	draw(ctx, drawSensors=false){
+	draw(ctx){
 		if(this.codeFont == null){
 			this.codeFont = findMaxFontSizeFromWidth(ctx, 2*this.radius);
 		}
 
 		if(this.goal != null){
-			this.drawSightCone(ctx, this.viewAngle, 30, this.radius*10)
+			this.drawSightCone(ctx, this.viewAngle, 30, this.radius*10);
 		}
 
-		// figure proper
+		// draw figure
 		ctx.fillStyle = this.color;
 		if(this.isBlocked){
 			ctx.fillStyle = "red";
@@ -322,14 +258,10 @@ class Figure{
 		ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
 		ctx.fill();
 
-		if(this.sensor && drawSensors && this.goal != null){
-			this.sensor.updateTest();
-			this.sensor.draw(ctx);
-		}
-
-		let rad = this.radius
+		// draw seat number on figure
+		let rad = this.radius;
 		drawTextInRect(ctx, this.x-rad, this.y-rad, 2*this.radius, 2*this.radius, 
-					this.seatDesc.code, this.codeFont, false, "white")
+					this.seatDesc.code, this.codeFont, false, "white");
 	}
 }
 		

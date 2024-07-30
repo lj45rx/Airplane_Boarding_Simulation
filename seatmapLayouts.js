@@ -41,5 +41,14 @@ let seatMapLayouts = [
 				[20, "ABC-DEF-GHI"],
 				[1, "ex"]
 			]
+    },
+	{
+        "name": "fantasy 1+1 x 5, 2exits",
+        "url": "",
+		"map": [
+				[1, "ex"],
+				[5, "A-b"],
+				[1, "ex"]
+			]
     }
 ]
