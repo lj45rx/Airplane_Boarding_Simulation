@@ -1,36 +1,10 @@
-// wait, move, turn
-
-const ActionType = {
-	Move: 0,
-	Wait: 1,
-	Turn: 2
-}
-
-class MoveAction{
-	constructor(goalX, goalY){
-		this.type = ActionType.Move;
-		this.goalX = goalX;
-		this.goalY = goalY;
-	}
-}
-
-class WaitAction{
-	constructor(durationInTicks){
-		this.type = ActionType.Wait;
-		this.duration = durationInTicks;
-	}
-}
-
-class TurnAction{
-	constructor(goalAngle){
-		this.type = ActionType.Turn;
-		this.goalAngle = goalAngle;
-	}
-}
-
-
 class Figure{
-	constructor(seatMap, seatIdx, radius){
+	constructor(seatMap, seatIdx, radius, exitNum){
+		this.seatMap = seatMap
+		this.seatIdx = seatIdx
+		this.radius = radius;
+		this.seatDesc = seatMap.seatDescs[seatIdx]
+
 		this.x = 0;
 		this.y = 0;
 		this.speed = 3;
@@ -39,51 +13,39 @@ class Figure{
 		this.color = "blue";
 		this.sensor = new Sensor(this);
 		this.path = Array();
-		this.pIdx = 0;
+		this.pathStepIdx = 0;
 		this.finished = false;
 		this.checkCollisions = true;
 		this.goal = null;
 		this.isBlocked = false;
-
 		this.codeFont = null;
-
-		this.radius = radius;
-		this.seatMap = seatMap
-		this.seatIdx = seatIdx
-		this.seatDesc = seatMap.seatDescs[seatIdx]
-
 		this.sleepTicks = 0;
 
-		this.currentAction = null;
-		this.actionQueue = Array()
-		this.actionQueueB = Array()
+		this.turningSpeedInDegrees = 10;
+		this.goalAngle = 0;
 
-
-		this.testTurnDeg = 10;
-		this.testGoalAngle = 0;
-
-		this.createPath(0)
-	}
-
-	onResize(){
-
+		//TODO maybe find better solution, create path when move called etc
+		this.createPath(exitNum); 
 	}
 
 	createPath(exitNum = 0){
+		// CAUTION all values pushed to path must be arrays
+		// eg [{x:123, y:456}]
+
 		// set figure below given exit - "spawn"
 		let exitX = this.seatMap.exitXValues[exitNum];
-		this.x = exitX;
-		this.y = 380; //TODO +from size
 
-		//move up to "correct" aisle - closest to seat center-y
+		// set "spawn point"
+		this.x = exitX;
+		this.y = 380; //TODO get this from canvas size
+
+		//find y of correct aisle - closest to seat center-y
 		let aisleY;
 		let lastDist;
 		for(let i = 0; i < this.seatMap.aisleYValues.length; i++){
 			let ay = this.seatMap.aisleYValues[i]
 			let aisleDist = distance({x:exitX, y:this.seatDesc.positionRect.center.y}, {x:exitX, y:ay});
 
-			
-			//console.log(lastDist, aisleDist, "----", lastDist>aisleDist)
 			if(i == 0 || lastDist > aisleDist){
 				//console.log("setting as", ay, aisleDist)
 				lastDist = aisleDist;
@@ -91,28 +53,18 @@ class Figure{
 			}
 		}
 
-
-		this.path.push({x:exitX, y:aisleY});
-		this.actionQueue.push(["move", exitX, aisleY]);
-		this.actionQueueB.push(new MoveAction(exitX, aisleY));
+		//move up from "below" the plane to center-y of correct aisle
+		this.path.push([{x:exitX, y:aisleY}]);
 
 		// move along aisle to seat center-x
-		this.path.push({x:this.seatDesc.positionRect.center.x, y:aisleY});
-		
-		this.actionQueueB.push(new MoveAction(this.seatDesc.positionRect.center.x, aisleY));
-
-
-
+		this.path.push([{x:this.seatDesc.positionRect.center.x, y:aisleY}]);
+	
 		// stow luggage, then sit down
-		this.path.push([this.seatDesc.positionRect.center, 50, false]); //TODO experiment pos,waitTicks,checkcollisions
-
-		// sit down		
-		//this.path.push(this.seatDesc.position.center);
-
+		// go to seat, but first wait ("stow luggage"), dont check for collisions
+		this.path.push([this.seatDesc.positionRect.center, 50, false]);
 
 		//console.log(this.path)
 		this.getNextGoal()
-		//console.log(this.goal, this.x, this.y)
 	}
 	
 	fixGoal(){
@@ -121,31 +73,26 @@ class Figure{
 	}
 	
 	getNextGoal(){
-		if( this.pIdx < this.path.length ){
+		if( this.pathStepIdx < this.path.length ){
+			let goal = this.path[this.pathStepIdx++];
 
-			//TODO experiment - if len 2 sleep for some ticks
-			let goal = this.path[this.pIdx++];
-
+			// idx=2 stores if check for collisions is done
+			// default is true
 			this.checkCollisions = true;
 			if(goal.length > 2){
 				this.checkCollisions = goal[2];
 			}
 
+			// idx=1 stores how long to wait before moving
 			if(goal.length > 1){
 				this.sleepTicks = goal[1];
-				goal = goal[0]; //TODO fix - this overwrites goal
 			}
 			
-
-
-			this.goal = goal
-
-			//this.goal = this.path[this.pIdx++];
+			// idx=0 stores location to move to
+			this.goal = goal[0];
 			
 			this.goalX = this.goal.x;
 			this.goalY = this.goal.y;
-
-
 		} else {
 			this.goal = null;
 		}
@@ -155,33 +102,32 @@ class Figure{
 		if( this.goal == null){
 			return false;
 		}
-		
 		return this.x == this.goal.x && this.y == this.goal.y;
 	}
 	
 	update(time, allFigures){
-		if(this.goal == null) return;
-
-		//wait, turn or move
+		//turn, then wait, then move
 		// before move check collisions with other figures
 
-		if(this.viewAngle != this.testGoalAngle){
-			let diffDeg = findDifferenceBetweenAngles(this.viewAngle, this.testGoalAngle, this.testTurnDeg);
+		//turn
+		if(this.viewAngle != this.goalAngle){
+			let diffDeg = findDifferenceBetweenAngles(this.viewAngle, this.goalAngle, this.turningSpeedInDegrees);
 			this.viewAngle = (360+(this.viewAngle+diffDeg))%360;
-			
 			return;
 		}
 
+		// wait
 		if(this.sleepTicks > 0){
 			this.sleepTicks--;
 			return;
 		}
 
-		// start next goal if needed
-		if(this.goal == null){
+		//TODO check if needed here (or at beginning of fkt)
+		if(this.goal == null){ 
 			return;
 		}
 
+		// start next goal if needed
 		if( this.isAtGoalXY() ){
 			this.getNextGoal();
 			if(this.goal == null){
@@ -193,7 +139,7 @@ class Figure{
 			this.goalX = this.goal.x;
 			this.goalY = this.goal.y;
 
-			this.testGoalAngle = angle(this.x, this.y, this.goalX, this.goalY);
+			this.goalAngle = angle(this.x, this.y, this.goalX, this.goalY);
 			return; // TODO - dont move in first step
 		}
 
@@ -207,6 +153,8 @@ class Figure{
 	}
 	
 	#move(){
+		// allow movement in both x and y
+
 		if(this.x < this.goalX){
 			//this.viewAngle = 90;
 			this.x = Math.min(this.x+this.speed, this.goalX);
@@ -221,7 +169,6 @@ class Figure{
 			this.y = Math.min(this.y+this.speed, this.goalY);
 		} else if (this.y > this.goalY) {
 			//console.log("going up", this.y, this.speed, this.goalY)
-			//this.viewAngle = 0;
 			this.y = Math.max(this.y-this.speed, this.goalY);
 		}
 	}

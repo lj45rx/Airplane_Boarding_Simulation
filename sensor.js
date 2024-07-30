@@ -1,7 +1,8 @@
 class Sensor{
 	constructor(figure){
 		this.figure = figure;
-		this.sensorLenght = 30;
+		this.sensorLenght = 30;//*figure.radius;
+		console.log(figure.radius)
 	}
 
 	checkCollision(allFigures){

@@ -39,7 +39,7 @@ function createBordingOrder_groupsBackToFront(seatMap, groups=8, frontToBack=fal
 	return resultIndices;
 }
 
-function createPassengerFigures(){
+function createPassengerFigures(exitNum){
 	// create order of seats
 	//var indices = createBordingOrder_random(seatMap);
 	let indices = createBordingOrder_groupsBackToFront(seatMap, 8, false);
@@ -52,7 +52,7 @@ function createPassengerFigures(){
 	// create array with "passengers"
 	let figures = Array()
 	for(let i = 0; i < numDrawnPassengers; i++){
-		figures.push(new Figure(seatMap, indices[i], figureRadius))
+		figures.push(new Figure(seatMap, indices[i], figureRadius, exitNum))
 	}
 
 	return figures;
@@ -69,25 +69,26 @@ function loadSeatmapLayouts(){
 	} 
 }
 
-function onStart(){
-	runAnimation = true;
-	animate();
-}
-
-function onStop(){
-	runAnimation = false;
-}
-
-function getSelectedTextInDropdownList(dropdownEl){
+function getSelectedValueInDropdownList(dropdownEl){
 	//var dropdownElement = document.getElementById("elementId");
 	var value = dropdownEl.options[dropdownEl.selectedIndex].value;
 	var text = dropdownEl.options[dropdownEl.selectedIndex].text;
-	return text
+	return {text: text, value: value};
+}
+
+function populateEntranceNumberDropdownList(count){
+	entranceSelector.innerHTML = "";
+	for(let i = 0; i < count; i++){
+		let newOption = document.createElement("option");
+		newOption.setAttribute("value", i);
+		newOption.innerHTML = i+1
+		entranceSelector.appendChild(newOption);
+	}
 }
 
 function onSeatmapChanged(seatMapDesc=null){
 	if(seatMapDesc == null){
-		let seatMapName = getSelectedTextInDropdownList(seatmapSelector);
+		let seatMapName = getSelectedValueInDropdownList(seatmapSelector).text;
 		seatMapDesc = nameToSeatmapDict[seatMapName];
 	}
 	
@@ -101,11 +102,29 @@ function onSeatmapChanged(seatMapDesc=null){
 
 	console.log("####################");
 
+	// populate list of possible entrances
+	populateEntranceNumberDropdownList(seatMap.noExits);
+
 	//set link to description
 	seatmapLink.setAttribute("href", seatMapDesc.url);
 	seatmapLink.innerHTML = seatMapDesc.url;
 	
-	passengerFigures = createPassengerFigures();
+	passengerFigures = null; // create when start is called
+}
+
+function onStart(){
+	if(runAnimation || passengerFigures == null){
+		let entranceNr = Number(getSelectedValueInDropdownList(entranceSelector).value);
+		console.log("using entrance ", entranceNr);
+		passengerFigures = createPassengerFigures(entranceNr);
+	}
+
+	runAnimation = true;
+	animate();
+}
+
+function onStop(){
+	runAnimation = false;
 }
 
 
@@ -116,6 +135,7 @@ planeCanvas.width = 1100;
 const planeCtx = planeCanvas.getContext("2d");
 
 const seatmapSelector = document.getElementById("seatmapSelector");
+const entranceSelector = document.getElementById("entranceSelector");
 const seatmapLink = document.getElementById("seatmapLink");
 const nameToSeatmapDict = {};
 
@@ -127,34 +147,18 @@ loadSeatmapLayouts();
 onSeatmapChanged(seatMapLayouts[0]); // draw first map 
 
 
-
+//TODO put these in start or similar
+console.error("TODO correctly reset variables on restart")
 var runAnimation = false;
-
-
-/*
-var indices = createBordingOrder_groupsBackToFront(seatMap, 8, false);
-var cnt = 2000; // manual maximum num seats
-
-var totalNoSeats = seatMap.seatDescs.length;
-cnt = Math.min(cnt, totalNoSeats)
-var manyFigures = Array()
-for(let i = 0; i < cnt; i++){
-	passengerFigures.push(new Figure(seatMap, indices[i], figureRadius))
-}
-*/
-
-
-function save(){}
-function discard(){}
-
 
 let start, previousTimeStamp;
 let done = false;
 
 var drawnCnt = 0;
 var ticks = 0;
-var ticksSinceLastDraw = 0;
+var ticksSinceLastNewFigureDrawn = 0;
 var tickDisplayFont = findMaxFontSizeFromWidth(planeCtx, 100, "99999");
+
 function animate(timeStamp){
 	if(0 < ticks && ticks % 500 == 0){
 		console.log(ticks, "animation running...");
@@ -163,26 +167,22 @@ function animate(timeStamp){
 	if (start === undefined) {
 		start = timeStamp;
 	}
+
 	const elapsed = timeStamp - start;
 	const elapsedSinceLastFrame = timeStamp-previousTimeStamp
 	
-	//console.log("time:", timeStamp, elapsedSinceLastFrame, elapsed)
-	
-	seatMap.draw(planeCtx) //TODO maybe reduce cost for redraw - remember values where possible
-	//figure.update(timeStamp)
-	//figure.draw(planeCtx)
+	// redraw seatmap(=background)
+	seatMap.draw(planeCtx);
 
-
-
-	if(ticksSinceLastDraw >= 10 
+	if(ticksSinceLastNewFigureDrawn >= 10 
 		&& drawnCnt < numDrawnPassengers
-		&& (drawnCnt == 0 || passengerFigures[drawnCnt].y > passengerFigures[drawnCnt-1].y)
+		&& (drawnCnt == 0 || passengerFigures[drawnCnt].y-(2*figureRadius) > passengerFigures[drawnCnt-1].y) // none drawn || last figure has "moved up into the plane"
 	){
-		// draw next figure - if last has moved up "into airplane"
+		// draw next figure
 		drawnCnt++;
-		ticksSinceLastDraw= 0;
+		ticksSinceLastNewFigureDrawn=0;
 	} else {
-		ticksSinceLastDraw++;
+		ticksSinceLastNewFigureDrawn++;
 	}
 
 	for(let i = 0; i < drawnCnt; i++){
@@ -192,7 +192,7 @@ function animate(timeStamp){
 
 	drawTextInRect(planeCtx, planeCanvas.width-100, planeCanvas.height-30, 100, 30, ticks, tickDisplayFont, true, "white");
 
-	//TODO testing only - break if all have no goals
+	//break if all have no goals
 	if(drawnCnt == numDrawnPassengers){
 		let allStopped = true;
 		for(let i = 0; i < numDrawnPassengers && allStopped; i++){
