@@ -39,52 +39,100 @@ function createBordingOrder_groupsBackToFront(seatMap, groups=8, frontToBack=fal
 	return resultIndices;
 }
 
+function createPassengerFigures(){
+	// create order of seats
+	//var indices = createBordingOrder_random(seatMap);
+	let indices = createBordingOrder_groupsBackToFront(seatMap, 8, false);
+
+	// all or only some of the seats might be full
+	var manualMaxNumPassengers = 2000;
+	var totalNoSeats = seatMap.seatDescs.length;
+	let numDrawnPassengers = Math.min(totalNoSeats, manualMaxNumPassengers)
+
+	// create array with "passengers"
+	var figures = Array()
+	for(let i = 0; i < numDrawnPassengers; i++){
+		figures.push(new Figure(seatMap, indices[i], figureRadius))
+	}
+
+	return figures;
+}
+
+function loadSeatmapLayouts(){
+	for(let map of seatMapLayouts){
+		let newOption = document.createElement("option");
+		newOption.setAttribute("value", map.name);
+		newOption.innerHTML = map.name
+		seatmapSelector.appendChild(newOption);
+
+		nameToSeatmapDict[map.name] = map;
+	} 
+}
+
+function createSeatmapDict(){
+	let res = {};
+	for(let map of seatMapLayouts){
+		
+	}
+}
+
+
 //get canvas, set size
-const planeCanvas = document.getElementById("carCanvas");
+const planeCanvas = document.getElementById("canvas");
 planeCanvas.height = 300;
 planeCanvas.width = 1100;
 const planeCtx = planeCanvas.getContext("2d");
 
-const seatMap = new Seatmap(planeCanvas.width, planeCanvas.height); 
-seatMap.draw(planeCtx)
+const seatmapSelector = document.getElementById("seatmapSelector");
+const seatmapLink = document.getElementById("seatmapLink");
+const nameToSeatmapDict = {};
 
-// based on seatmap, needed in figures
-let figureRadius = Math.min(seatMap.seatW, seatMap.seatH)/2-2;
-
-// create order of seats
-	//var indices = createBordingOrder_random(seatMap);
-let indices = createBordingOrder_groupsBackToFront(seatMap, 8, false);
-
-// all or only some of the seats might be full
-var manualMaxNumPassengers = 2000;
-var totalNoSeats = seatMap.seatDescs.length;
-let numDrawnPassengers = Math.min(totalNoSeats, manualMaxNumPassengers)
-
-// create array with "passengers"
-var passengerFigures = Array()
-for(let i = 0; i < numDrawnPassengers; i++){
-	passengerFigures.push(new Figure(seatMap, indices[i], figureRadius))
-}
-
-console.log("manually creating figures");
+let seatMap = null;
+let figureRadius = -1; // based on seatmap, needed in figures
+loadSeatmapLayouts()
+onSeatmapChanged(seatMapLayouts[0]); // draw first map 
 
 
-var figure;
+
+let passengerFigures = []
 var runAnimation = false;
 
 
 function onStart(){
-	let randInt = getRandomInt(seatMap.seatDescs.length);
-
-	figure = new Figure(seatMap, randInt, figureRadius);
-	figure.draw(planeCtx)
-
 	runAnimation = true;
 	animate();
 }
 
 function onStop(){
 	runAnimation = false;
+}
+
+function getSelectedTextInDropdownList(dropdownEl){
+	//var dropdownElement = document.getElementById("elementId");
+	var value = dropdownEl.options[dropdownEl.selectedIndex].value;
+	var text = dropdownEl.options[dropdownEl.selectedIndex].text;
+	return text
+}
+
+function onSeatmapChanged(seatMapDesc=null){
+	if(seatMapDesc == null){
+		let seatMapName = getSelectedTextInDropdownList(seatmapSelector);
+		seatMapDesc = nameToSeatmapDict[seatMapName];
+	}
+	
+	// load seatmap object
+	console.log("####################\n(TODO remove console prints)");
+	console.log("loading seatmap\n    \"" + seatMapDesc.name + "\"");
+
+	seatMap = new Seatmap(seatMapDesc.map, planeCanvas.width, planeCanvas.height); 
+	seatMap.draw(planeCtx)
+	figureRadius = Math.min(seatMap.seatW, seatMap.seatH)/2-2;
+	
+	console.log("####################");
+
+	//set link to description
+	seatmapLink.setAttribute("href", seatMapDesc.url);
+	seatmapLink.innerHTML = seatMapDesc.url;
 }
 
 function save(){}

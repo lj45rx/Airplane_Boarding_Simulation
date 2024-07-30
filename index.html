@@ -8,12 +8,30 @@
 	-->
   </head>
   <body>
-    <canvas id="carCanvas"></canvas>
+    <form>
+      <label for="seatmapSelector">Choose a Seatmap:</label>
+      <select id="seatmapSelector" name="seatmapSelector">
+        <!-- populated via script -->
+      </select>
+      <button type="button" onclick="onSeatmapChanged()">Load new Seatmap</button>
+    </form>
+    <table>
+      <tr>
+        <td>
+          <p>Seatmap description/image (if available): </p>
+        </td>
+        <td>
+          <a id="seatmapLink" href="https://duckduckgo.com/" target="_blank">unchanged</a>
+        </td>
+      </tr>
+    </table>
+
+    <canvas id="canvas" style="clear: left;"></canvas>
     <div id="buttons">
-		<button onclick="onStart()">runTest</button>
-		<button onclick="onStop()">stopTest</button>
-		<button onclick="save()">save</button>
-		<button onclick="discard()">discard</button>
+      <button onclick="onStart()">runTest</button>
+      <button onclick="onStop()">stopTest</button>
+      <button onclick="save()">save</button>
+      <button onclick="discard()">discard</button>
     </div>
 	
     <script src="utils.js"></script>
@@ -21,6 +39,7 @@
     <script src="drawSeatmap.js"></script>
     <script src="sensor.js"></script>
     <script src="figure.js"></script>
+    <script src="seatmapLayouts.js"></script>
 
     <script src="main.js"></script>
   </body>

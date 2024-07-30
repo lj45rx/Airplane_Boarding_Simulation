@@ -4,57 +4,6 @@ let WIDTH_FACTOR = 1.25 // seat height is 1, seat width might be wider
 //const C_PLANE_BORDER = "black"
 //const C_PLANE_FLOOR = "gray"
 
-
-//airfrance b777-300er three class
-const map = [
-[1, "ex"],
-[4, "AB-EFG-KL"],
-[1, "ex"],
-[2, "AB-EFG-KL"],
-[4, "AB-EFGH-KL"],
-[6, "ABC-EFGH-JKL"],
-[1, "ABC-____-___"],
-//[1, "eex"], // ignore emergency exit
-[12, "ABC-EFGH-JKL"],
-[1, "ABC-____-JKL"],
-[1, "___-____-_KL"],
-[1, "ex"],
-[2, "ABC-____-JKL"],
-[7, "ABC-EFGH-JKL"],
-[4, "AB-EFGH-KL"],
-[1, "AB-____-KL"],  //was 1
-[1, "ex"]
-]
-
-//peach a320neo
-const mapa = [
-[1, "ex"],
-[30, "ABC-DEF"],
-[1, "ex"],
-]
-
-//fantasy
-const mapb = [
-[1, "ex"],
-[1, "ABC-DEF-GHI"],
-[1, "ex"],
-[20, "ABC-DEF-GHI"],
-[1, "ex"],
-[20, "ABC-DEF-GHI"],
-[1, "ex"],
-]
-
-class Map{
-	constructor(mapString){
-		this.mapString = mapString;
-		console.log("creating map")
-	}
-}
-
-
-
-
-
 class Sizes{
 	constructor(){
 		this.canvasW;
@@ -195,10 +144,11 @@ class SeatDesc{
 
 
 class Seatmap{
-	constructor(width, height, aisleCount=2){
-		this.testMap = new Map(map);
-		this.error = ""; // TODO maybe remove
+	constructor(seatmap, width, height, aisleCount=2){
+		this.seatmap = seatmap;
 		
+		this.error = ""; // TODO maybe remove
+
 		// settings
 		this.horPaddingRowCnt = 2; // total 2 for 1 per side
 		// settings end
@@ -255,9 +205,9 @@ class Seatmap{
 		this.noExits = 0;
 		let colNum = 0; //count rows and exits
 		let rowNum = 0; //count rows only
-		for(let i = 0; i < map.length; i++){
-			let segStr = map[i][1]
-			let segRows = map[i][0]
+		for(let i = 0; i < this.seatmap.length; i++){
+			let segStr = this.seatmap[i][1]
+			let segRows = this.seatmap[i][0]
 			
 			if( ["ex", "eex"].includes(segStr) ){
 				//console.log("dajsdkash", segStr)
