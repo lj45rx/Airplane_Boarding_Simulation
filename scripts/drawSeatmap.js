@@ -4,6 +4,9 @@ let WIDTH_FACTOR = 1.25 // seat height is 1, seat width might be wider
 //const C_PLANE_BORDER = "black"
 //const C_PLANE_FLOOR = "gray"
 
+// TODO unused
+// use as central point for all dimensions
+// or remove
 class Sizes{
 	constructor(){
 		this.canvasW;
@@ -140,14 +143,16 @@ class SeatDesc{
 	}
 }
 
-
-
-
 class Seatmap{
-	constructor(seatmap, width, height, aisleCount=2){
+	constructor(seatmap, width, height){
 		this.seatmap = seatmap;
-		
-		this.error = ""; // TODO maybe remove
+		this.width = width;
+		this.height = height;
+
+		// TODO unused
+		// idea was to show error message in draw()
+		// use or delete (here and in draw())
+		this.error = ""; 
 
 		// settings
 		this.horPaddingRowCnt = 2; // total 2 for 1 per side
@@ -157,18 +162,14 @@ class Seatmap{
 		this.exitCols = Array();
 		this.noRows = 0;
 		this.noExits = 0;
-		this.loadSegments();
+		this.#loadSegments();
 		
 		this.noAisles;
 		this.maxSeatsPerRow;
 		this.densestAisleLayout;
-		this.findDensestLayout()
+		this.#findDensestLayout()
 		
 		console.log("densest", this.densestAisleLayout, this.noAisles)
-		
-		this.x = width/2; //TODO delete??
-		this.width = width;
-		this.height = height;
 		
 		this.seatW = 0;
 		this.seatH = 0;
@@ -176,9 +177,8 @@ class Seatmap{
 		this.planeBorderRect;
 		this.aisleYValues = Array();
 		this.exitXValues = Array();
-		this.findSizes();
+		this.#findSizes();
 		
-		//TODO ugly but should work for now 
 		this.initialized = false;
 
 		// different containers holding seatDescs 
@@ -188,7 +188,6 @@ class Seatmap{
 		this.seatNumbers = new Set()
 		this.seatsDescsByRow = Array();
 
-
 		this.mapSeatCodeToIndex = {};
 
 		// create buffer canvas - draw individual elements once, then copy from buffer
@@ -197,7 +196,7 @@ class Seatmap{
         this.bufCtx = null;
 		
 		
-		//TODO delete if unused
+		//TODO unused
 		this.left = 0;
 		this.right = width;
 		this.top = 0;
@@ -206,7 +205,7 @@ class Seatmap{
 
 	}
 	
-	loadSegments(){
+	#loadSegments(){
 		this.noExits = 0;
 		let colNum = 0; //count rows and exits
 		let rowNum = 0; //count rows only
@@ -231,7 +230,7 @@ class Seatmap{
 		console.log("total rows and exits", colNum);
 	}
 	
-	findDensestLayout(){
+	#findDensestLayout(){
 		//check all segments have same number of aisles
 		//find densenst layout (for aisle y-value)
 		
@@ -263,7 +262,7 @@ class Seatmap{
 		}
 	}
 	
-	findBestSeatSize(){
+	#findBestSeatSize(){
 		// find size to fill screen, assuming every seat gets a square
 		console.log("rows", this.noRows, "exits", this.noExits)
 		console.log("max seats", this.maxSeatsPerRow, "asiles", this.noAisles)
@@ -282,7 +281,7 @@ class Seatmap{
 		console.log(this.seatW, this.seatH)
 	}
 	
-	findVertivalBounds(){		
+	#findVertivalBounds(){		
 		let yTop = 2*this.seatH;
 		let yBottom = 0;
 		this.verticalBounds = Array()
@@ -300,7 +299,7 @@ class Seatmap{
 		}
 	}
 	
-	findPlaneBorderSize(horPadding){
+	#findPlaneBorderSize(horPadding){
 		var x = horPadding;
 		var y = this.verticalBounds[0].top;
 		
@@ -313,18 +312,18 @@ class Seatmap{
 		console.log(this.verticalBounds)
 	}
 	
-	findSizes(){
+	#findSizes(){
 		// seat sizes (->seat x-values)
-		this.findBestSeatSize()
+		this.#findBestSeatSize()
 		
 		// aisle y-positions 
-		this.findVertivalBounds()
+		this.#findVertivalBounds()
 		
 		// find offset in x (how far to the middle if width not fully used)
 		let horPadding = this.width - this.seatW*( this.noRows + this.noExits )
 		horPadding /= 2;
 		
-		this.findPlaneBorderSize(horPadding);
+		this.#findPlaneBorderSize(horPadding);
 		
 		// exitRow x values
 		for(let i = 0; i < this.noExits; i++){
@@ -343,7 +342,7 @@ class Seatmap{
 		}
 	}
 
-	initializeSeatsDescs(ctx){
+	#initializeSeatsDescs(ctx){
 		let font = findMaxFontSizeFromWidth(ctx, this.seatW-2);
 		for(let s = 0; s < this.segments.length; s++){
 			let seg = this.segments[s]	
@@ -384,7 +383,7 @@ class Seatmap{
 		}
 	}
 	
-	drawPlaneOuterFrame(ctx){
+	#drawPlaneOuterFrame(ctx){
 		var borderX = this.seatW/4;
 		var borderY = this.seatH/4;
 		ctx.fillStyle = "black"
@@ -399,7 +398,7 @@ class Seatmap{
 						this.planeBorderRect.w,this.planeBorderRect.h);
 	}
 
-	drawAisles(ctx){
+	#drawAisles(ctx){
 		ctx.strokeStyle = "blue";
 		for(let i = 0; i < this.noAisles; i++){
 			ctx.lineWidth = 1;
@@ -411,7 +410,7 @@ class Seatmap{
 		}
 	}
 
-	drawExits(ctx){
+	#drawExits(ctx){
 		ctx.strokeStyle = "green";
 		for(let i = 0; i < this.noExits; i++){
 			var tx = this.exitXValues[i]
@@ -422,7 +421,7 @@ class Seatmap{
 		}
 	}
 
-	drawRowNumbers(ctx){
+	#drawRowNumbers(ctx){
 		let font = findMaxFontSizeFromWidth(ctx, this.seatW-2);
 		for(let segIdx = 0; segIdx < this.segments.length; segIdx++){
 			for(let rowIdx = 0; rowIdx < this.segments[segIdx].rows; rowIdx++){
@@ -435,16 +434,16 @@ class Seatmap{
 		}
 	}
 
-	drawInitial(){
+	#drawInitial(){
 		// fill background 
 		this.bufCtx.fillStyle = "#444444";
 		this.bufCtx.fillRect(0, 0, this.right, this.bottom)
 		
 		// airplane "frame"
-		this.drawPlaneOuterFrame(this.bufCtx);
+		this.#drawPlaneOuterFrame(this.bufCtx);
 		
 		// draw row numbers on top
-		this.drawRowNumbers(this.bufCtx);
+		this.#drawRowNumbers(this.bufCtx);
 
 		//draw seats
 		for(let seatIdx = 0; seatIdx < this.seatDescs.length; seatIdx++){
@@ -452,10 +451,10 @@ class Seatmap{
 		}
 		
 		// draw aisles
-		this.drawAisles(this.bufCtx);
+		this.#drawAisles(this.bufCtx);
 		
 		// draw exits
-		this.drawExits(this.bufCtx);
+		this.#drawExits(this.bufCtx);
 	}
 
 	draw(ctx){
@@ -483,10 +482,10 @@ class Seatmap{
 			this.bufCtx = this.bufferCanvas.getContext('2d');
 
 			// initialize seats 
-			this.initializeSeatsDescs(ctx)
+			this.#initializeSeatsDescs(ctx)
 
 			// draw on bufferCanvas
-			this.drawInitial();
+			this.#drawInitial();
 
 			this.initialized = true;
 			this.draw(ctx); // call again, with initialized=true

@@ -24,11 +24,10 @@ class Figure{
 		this.turningSpeedInDegrees = 10;
 		this.goalAngle = 0;
 
-		//TODO maybe find better solution, create path when move called etc
-		this.createPath(exitNum); 
+		this.#createPath(exitNum); 
 	}
 
-	createPath(exitNum = 0){
+	#createPath(exitNum = 0){
 		// CAUTION all values pushed to path must be arrays
 		// eg [{x:123, y:456}]
 
@@ -64,15 +63,15 @@ class Figure{
 		this.path.push([this.seatDesc.positionRect.center, 50, false]);
 
 		//console.log(this.path)
-		this.getNextGoal()
+		this.#getNextGoal()
 	}
 	
-	fixGoal(){
+	#fixGoal(){ // TODO unused
 		this.goalX = this.goalX - this.radius;
 		this.goalY = this.goalY - this.radius;
 	}
 	
-	getNextGoal(){
+	#getNextGoal(){
 		if( this.pathStepIdx < this.path.length ){
 			let goal = this.path[this.pathStepIdx++];
 
@@ -98,7 +97,7 @@ class Figure{
 		}
 	}
 	
-	isAtGoalXY(){
+	#isAtGoalXY(){
 		if( this.goal == null){
 			return false;
 		}
@@ -128,8 +127,8 @@ class Figure{
 		}
 
 		// start next goal if needed
-		if( this.isAtGoalXY() ){
-			this.getNextGoal();
+		if( this.#isAtGoalXY() ){
+			this.#getNextGoal();
 			if(this.goal == null){
 				this.viewAngle = 270;
 				this.finished = true;
@@ -173,7 +172,7 @@ class Figure{
 		}
 	}
 	
-	drawSightCone(ctx, centerAngle, widthRadius, length){
+	#drawSightCone(ctx, centerAngle, widthRadius, length){
 		// sightline
 		// 0 = right; 90 = down; etc
 		let startAngleDeg = (centerAngle-widthRadius)%360;
@@ -193,7 +192,7 @@ class Figure{
 		}
 
 		if(this.goal != null){
-			this.drawSightCone(ctx, this.viewAngle, 30, this.radius*10);
+			this.#drawSightCone(ctx, this.viewAngle, 30, this.radius*10);
 		}
 
 		// draw figure

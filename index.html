@@ -29,10 +29,14 @@
     <canvas id="canvas" style="clear: left;"></canvas>
 
     <form>
-      <label for="entranceSelector">Choose entrance number:</label>
+      <label for="entranceSelector">Use entrance number:</label>
       <select id="entranceSelector" name="entranceSelector">
         <!-- populated via script -->
       </select>
+      <label for="numBoradingGroupsSelector">Number of groups:</label>
+      <input type="number" id="numBoradingGroupsSelector" name="numBoradingGroupsSelector" value= 8 min="1">
+      <input type="checkbox" id="checkboxStartBoardingAtBack" name="checkboxStartBoardingAtBack">
+      <label for="checkboxStartBoardingAtBack">Start at the front</label><br>
     </form>
 
     <div id="buttons">
@@ -40,13 +44,12 @@
       <button onclick="onStop()">pauseTest</button>
     </div>
 	
-    <script src="utils.js"></script>
-    <script src="grid.js"></script>
-    <script src="drawSeatmap.js"></script>
-    <script src="sensor.js"></script>
-    <script src="figure.js"></script>
-    <script src="seatmapLayouts.js"></script>
+    <script src="utils/utils.js"></script>
+    <script src="scripts/drawSeatmap.js"></script>
+    <script src="scripts/sensor.js"></script>
+    <script src="scripts/figure.js"></script>
+    <script src="layouts/seatmapLayouts.js"></script>
 
-    <script src="main.js"></script>
+    <script src="scripts/main.js"></script>
   </body>
 </html>

@@ -1,11 +1,5 @@
-function createBordingOrder_random(seatMap){
-	var totalNoSeats = seatMap.seatDescs.length;
-	var indices = [...Array(totalNoSeats).keys()];
-	shuffleArray(indices);
-	return indices;
-}
-
 // split seatmap into equaly sized groups, output in order of groups, shuffle inside groups
+// for random use 1 group
 function createBordingOrder_groupsBackToFront(seatMap, groups=8, frontToBack=false){
 	let totalRows = seatMap.noRows;
 	let groupSizes = splitSizeIntoGroups(totalRows, groups);
@@ -42,7 +36,11 @@ function createBordingOrder_groupsBackToFront(seatMap, groups=8, frontToBack=fal
 function createPassengerFigures(exitNum){
 	// create order of seats
 	//var indices = createBordingOrder_random(seatMap);
-	let indices = createBordingOrder_groupsBackToFront(seatMap, 8, false);
+
+	let numGroups = Math.min(numBoradingGroupsSelector.value, seatMap.noRows);
+	let boardFromTheBack = checkboxStartBoardingAtBack.checked;
+
+	let indices = createBordingOrder_groupsBackToFront(seatMap, numGroups, boardFromTheBack);
 
 	// all or only some of the seats might be full
 	let manualMaxNumPassengers = 2000;
@@ -105,6 +103,15 @@ function onSeatmapChanged(seatMapDesc=null){
 	// populate list of possible entrances
 	populateEntranceNumberDropdownList(seatMap.noExits);
 
+	// set maximum of boarding groups to num rows
+	numBoradingGroupsSelector.setAttribute("max", seatMap.noRows);
+
+	let newValNumGroups = Math.floor(seatMap.noRows/5);
+	numBoradingGroupsSelector.value = newValNumGroups;
+
+	// unselect checkboxStartBoardingAtBack
+	checkboxStartBoardingAtBack.checked = false;
+
 	//set link to description
 	seatmapLink.setAttribute("href", seatMapDesc.url);
 	seatmapLink.innerHTML = seatMapDesc.url;
@@ -137,6 +144,8 @@ const planeCtx = planeCanvas.getContext("2d");
 const seatmapSelector = document.getElementById("seatmapSelector");
 const entranceSelector = document.getElementById("entranceSelector");
 const seatmapLink = document.getElementById("seatmapLink");
+const numBoradingGroupsSelector = document.getElementById("numBoradingGroupsSelector");
+const checkboxStartBoardingAtBack = document.getElementById("checkboxStartBoardingAtBack");
 const nameToSeatmapDict = {};
 
 let seatMap = null;

@@ -1,4 +1,4 @@
-
+// url and name must be set, but can be ""
 let seatMapLayouts = [
 	{
 		"name": "airfrance b777-300er three class",
